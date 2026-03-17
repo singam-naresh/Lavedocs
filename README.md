@@ -1,128 +1,199 @@
 # LaveDocs – Collaborative Document Editor
 
-> Live demo: *(add after deployment)*
-
-A production-quality collaborative document editor built with Next.js 14, Prisma, and TipTap.
-
-## Features
-
-- Simulated multi-user collaboration — switch accounts to demo shared access
-- Document sharing via email — any added collaborator appears in the user switcher automatically
-- Rich-text editing (bold, italic, underline, headings, lists, blockquote, code)
-- Auto-save with debounce (1.5 s idle) + manual save button
-- "My Documents" / "Shared With Me" dashboard tabs
-- File attachments — upload `.txt` files with progress indicator
-- Skeleton loading states, empty states, toast notifications
-- Owner-only controls (rename, delete, add collaborators)
-- Fully responsive down to 375 px
+A lightweight, AI-assisted full-stack collaborative document editor inspired by Google Docs.
+Built with **Next.js 14, Prisma, SQLite, and TipTap**, this project demonstrates clean product thinking, full-stack implementation, and practical engineering decisions under time constraints.
 
 ---
 
-## Tech Stack
+## 🚀 Features
 
-| Layer      | Technology                          |
-|------------|-------------------------------------|
-| Framework  | Next.js 14 (App Router)             |
-| Language   | TypeScript                          |
-| Styling    | Tailwind CSS + tailwindcss-animate  |
-| Editor     | TipTap (ProseMirror)                |
-| Database   | Prisma ORM + SQLite                 |
-| Toasts     | react-hot-toast                     |
-| Animation  | Framer Motion                       |
-| Testing    | Jest + ts-jest                      |
+### 📝 Document Management
+
+* Create, rename, and delete documents
+* Persistent storage using Prisma + SQLite
+* Automatic save and reload functionality
+
+### ✍️ Rich Text Editing
+
+* Built with TipTap editor
+* Supports:
+
+  * Bold, Italic, Underline
+  * Headings
+  * Lists
+* Clean, distraction-free editing UI
+
+### 🤝 Collaboration (Simulated)
+
+* Share documents via email (mocked users)
+* "My Documents" vs "Shared With Me" views
+* User switching to simulate multi-user system
+
+### 📎 File Upload
+
+* Upload `.txt` files
+* Attach files to documents
+* View attachments in sidebar
+
+### 🎨 UI/UX
+
+* Modern SaaS-style interface
+* Responsive design
+* Clean layout with clear document hierarchy
 
 ---
 
-## Setup
+## 🛠️ Tech Stack
 
-```bash
-# 1. Install dependencies
+| Layer    | Technology                          |
+| -------- | ----------------------------------- |
+| Frontend | Next.js 14 (App Router), TypeScript |
+| Styling  | TailwindCSS                         |
+| Editor   | TipTap                              |
+| Backend  | Next.js API Routes                  |
+| Database | Prisma + SQLite                     |
+| State    | React Hooks                         |
+
+---
+
+## 📂 Project Structure
+
+```
+app/                # Next.js App Router pages
+components/         # UI and feature components
+lib/                # API utilities and types
+prisma/             # Database schema and SQLite DB
+public/uploads/     # Uploaded files
+```
+
+---
+
+## ⚙️ Getting Started
+
+### 1. Install dependencies
+
+```
 npm install
+```
 
-# 2. Create the database and run migrations
+### 2. Setup database
+
+```
+npx prisma generate
 npx prisma migrate dev --name init
+```
 
-# 3. Start the development server
+### 3. Run the app
+
+```
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — it redirects to `/dashboard`.
-
----
-
-## Running Tests
-
-```bash
-npm test
-```
-
-Three unit tests cover the document-filtering utility functions (`filterByOwner`, `filterShared`).
-
----
-
-## Project Structure
+App runs at:
 
 ```
-app/
-  api/
-    documents/          GET list, POST create
-    documents/[id]/     GET, PUT, DELETE single doc
-    share/              POST add collaborator
-    upload/             POST file upload
-  dashboard/page.tsx    Dashboard route (server shell)
-  editor/[id]/page.tsx  Editor route (server shell)
-  layout.tsx            Root layout + Toaster
-  globals.css           Tailwind base + CSS vars
-
-components/
-  Dashboard/
-    DashboardClient.tsx  Full dashboard UI (client)
-  Editor/
-    EditorClient.tsx     Editor shell + auto-save
-    Tiptap.tsx           TipTap editor wrapper
-    MenuBar.tsx          Formatting toolbar
-    Sidebar.tsx          Collaborators + attachments
-
-lib/
-  prisma.ts             Prisma singleton
-  api.ts                Typed fetch wrappers
-  types.ts              Shared TypeScript types
-  utils.test.ts         Unit tests
-
-prisma/
-  schema.prisma         Document, Collaborator, File models
-  dev.db                SQLite database (git-ignored in production)
+http://localhost:3000
 ```
 
 ---
 
-## Assumptions
+## 🧪 Test Flow
 
-- Authentication is out of scope. The current user defaults to `lave@owner.com`. The user-switcher dropdown in the dashboard header is **dynamic** — every owner and collaborator email found in the database automatically appears as a switchable account. No hardcoded user list.
-- File uploads are stored under `public/uploads/` and served statically by Next.js.
-- SQLite is used for simplicity; swapping to PostgreSQL requires only a one-line change in `prisma/schema.prisma`.
+1. Create a document as:
+
+```
+lave@owner.com
+```
+
+2. Add collaborator:
+
+```
+inareshofficial@gmail.com
+```
+
+3. Switch user → view "Shared With Me"
+
+4. Edit document and verify persistence
 
 ---
 
-## What's Complete
+## 🧠 Architecture Overview
 
-- [x] Next.js 14 App Router migration
-- [x] Prisma + SQLite persistence (no localStorage)
-- [x] All CRUD API routes
-- [x] Sharing logic with collaborator deduplication
-- [x] File upload (`.txt`) with progress indicator
-- [x] Dashboard with "My Documents" / "Shared With Me" tabs
-- [x] Rich-text editor with auto-save
-- [x] Loading skeletons, empty states, error toasts
-- [x] Mobile-responsive layout (375 px+)
-- [x] Unit tests
+* Monolithic full-stack app using Next.js
+* API routes handle backend logic
+* Prisma ORM manages SQLite database
+* Frontend filters simulate multi-user collaboration
+* No authentication system (intentionally scoped)
 
-## What's Incomplete / Future Work
+---
 
-- [ ] Real authentication (NextAuth.js / Clerk)
-- [ ] Real-time collaborative editing (Yjs + WebSockets)
-- [ ] PostgreSQL for production deployments
-- [ ] Image / PDF file attachments
-- [ ] Document versioning / history
-- [ ] Search across documents
-- [ ] Role-based permissions (viewer vs editor)
+## 🤖 AI Usage
+
+AI tools were used to:
+
+* Scaffold components and API routes
+* Generate initial structures
+* Assist debugging and refinement
+
+All logic was reviewed, corrected, and tested manually.
+
+---
+
+## ⚖️ Tradeoffs & Decisions
+
+| Decision                   | Reason                               |
+| -------------------------- | ------------------------------------ |
+| No authentication          | Kept scope manageable                |
+| SQLite                     | Simple setup, no external dependency |
+| No real-time collaboration | Focused on core functionality        |
+| Mock users                 | Simulates real sharing behavior      |
+
+---
+
+## 📌 What’s Complete
+
+* Document creation/editing
+* Sharing logic
+* File upload
+* Persistent storage
+* Clean UI/UX
+
+---
+
+## 🔧 What Could Be Improved
+
+* Real authentication system
+* Real-time collaboration (WebSockets)
+* Document version history
+* Role-based permissions
+
+---
+
+## 📹 Demo
+
+(Include your video link here)
+
+---
+
+## 📎 Submission Notes
+
+This project focuses on:
+
+* Clean architecture
+* Practical product thinking
+* Functional full-stack implementation
+* Clear prioritization under time constraints
+
+---
+
+## 👨‍💻 Author
+
+**Naresh Singam**
+
+---
+
+## ⭐ Final Note
+
+This project is intentionally scoped to demonstrate strong fundamentals rather than over-engineering features.
+
+---
