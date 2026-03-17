@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @default("")
+  owner     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  collaborators Collaborator[]
+  files         File[]
+}
+
+model Collaborator {
+  id         String @id @default(cuid())
+  email      String
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model File {
+  id         String @id @default(cuid())
+  name       String
+  path       String
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
