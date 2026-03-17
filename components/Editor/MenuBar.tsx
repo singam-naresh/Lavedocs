@@ -1,20 +1,30 @@
 'use client';
 
 import { Editor } from '@tiptap/react';
-import {
-  Bold, Italic, Underline as UnderlineIcon,
-  Heading1, Heading2, List, ListOrdered,
-  Undo, Redo, Quote
-} from 'lucide-react';
+import { LucideIcon, Bold, Italic, Underline as UnderlineIcon, Heading1, Heading2, List, ListOrdered, Undo, Redo, Quote } from 'lucide-react';
 
 interface MenuBarProps {
   editor: Editor | null;
 }
 
+type ButtonItem = {
+  type?: never;
+  icon: LucideIcon;
+  action: () => void;
+  active?: string | Record<string, unknown>;
+  disabled?: boolean;
+};
+
+type DividerItem = {
+  type: 'divider';
+};
+
+type MenuItem = ButtonItem | DividerItem;
+
 export default function MenuBar({ editor }: MenuBarProps) {
   if (!editor) return null;
 
-  const items = [
+  const items: MenuItem[] = [
     { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold' },
     { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: 'italic' },
     { icon: UnderlineIcon, action: () => editor.chain().focus().toggleUnderline().run(), active: 'underline' },
@@ -32,10 +42,12 @@ export default function MenuBar({ editor }: MenuBarProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-white sticky top-0 z-10">
-      {items.map((item, index) =>
-        item.type === 'divider' ? (
-          <div key={index} className="w-px h-6 bg-border mx-1" />
-        ) : (
+      {items.map((item, index) => {
+        if (item.type === 'divider') {
+          return <div key={index} className="w-px h-6 bg-border mx-1" />;
+        }
+        const Icon = item.icon;
+        return (
           <button
             key={index}
             onClick={item.action}
@@ -46,10 +58,10 @@ export default function MenuBar({ editor }: MenuBarProps) {
                 : 'hover:bg-secondary text-muted-foreground'
             } disabled:opacity-30`}
           >
-            <item.icon size={18} />
+            <Icon size={18} />
           </button>
-        )
-      )}
+        );
+      })}
     </div>
   );
 }

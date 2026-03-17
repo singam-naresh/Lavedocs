@@ -11,12 +11,12 @@
   "dependencies": {
     "@prisma/client": "5.14.0",
     "@tailwindcss/typography": "^0.5.13",
-    "@tiptap/core": "2.4.0",
-    "@tiptap/extension-placeholder": "2.4.0",
-    "@tiptap/extension-underline": "2.4.0",
-    "@tiptap/pm": "2.4.0",
-    "@tiptap/react": "2.4.0",
-    "@tiptap/starter-kit": "2.4.0",
+    "@tiptap/core": "2.27.2",
+    "@tiptap/extension-placeholder": "2.27.2",
+    "@tiptap/extension-underline": "2.27.2",
+    "@tiptap/pm": "2.27.2",
+    "@tiptap/react": "2.27.2",
+    "@tiptap/starter-kit": "2.27.2",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.2.10",
     "lodash": "^4.17.21",
@@ -39,13 +39,5 @@
     "tailwindcss": "^3.4.4",
     "ts-jest": "^29.1.4",
     "typescript": "^5.4.5"
-  },
-  "overrides": {
-    "@tiptap/core": "2.4.0",
-    "@tiptap/pm": "2.4.0",
-    "@tiptap/react": "2.4.0",
-    "@tiptap/starter-kit": "2.4.0",
-    "@tiptap/extension-placeholder": "2.4.0",
-    "@tiptap/extension-underline": "2.4.0"
   }
 }
