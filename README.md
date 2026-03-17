@@ -1,199 +1,87 @@
-# LaveDocs – Collaborative Document Editor
+# LaveDocs
 
-A lightweight, AI-assisted full-stack collaborative document editor inspired by Google Docs.
-Built with **Next.js 14, Prisma, SQLite, and TipTap**, this project demonstrates clean product thinking, full-stack implementation, and practical engineering decisions under time constraints.
+A collaborative document editor built with Next.js 14, TipTap, and Prisma. Supports rich text editing, document sharing via email, file attachments, and persistent storage — no authentication required.
 
----
-
-## 🚀 Features
-
-### 📝 Document Management
-
-* Create, rename, and delete documents
-* Persistent storage using Prisma + SQLite
-* Automatic save and reload functionality
-
-### ✍️ Rich Text Editing
-
-* Built with TipTap editor
-* Supports:
-
-  * Bold, Italic, Underline
-  * Headings
-  * Lists
-* Clean, distraction-free editing UI
-
-### 🤝 Collaboration (Simulated)
-
-* Share documents via email (mocked users)
-* "My Documents" vs "Shared With Me" views
-* User switching to simulate multi-user system
-
-### 📎 File Upload
-
-* Upload `.txt` files
-* Attach files to documents
-* View attachments in sidebar
-
-### 🎨 UI/UX
-
-* Modern SaaS-style interface
-* Responsive design
-* Clean layout with clear document hierarchy
+Live demo: https://lavedocs.vercel.app
 
 ---
 
-## 🛠️ Tech Stack
+## Features
 
-| Layer    | Technology                          |
-| -------- | ----------------------------------- |
-| Frontend | Next.js 14 (App Router), TypeScript |
-| Styling  | TailwindCSS                         |
-| Editor   | TipTap                              |
-| Backend  | Next.js API Routes                  |
-| Database | Prisma + SQLite                     |
-| State    | React Hooks                         |
+- Create, rename, and delete documents
+- Rich text editor (bold, italic, underline, headings, lists, code blocks)
+- Share documents with other users by email
+- "My Documents" and "Shared With Me" views
+- Upload `.txt` files and attach them to documents
+- Auto-save with debounce (1.5s)
+- User switcher — switch between owner and collaborator accounts
+- Persistent storage via Prisma + PostgreSQL (Neon on Vercel, SQLite locally)
 
 ---
 
-## 📂 Project Structure
+## Tech Stack
+
+| Layer    | Technology                        |
+|----------|-----------------------------------|
+| Frontend | Next.js 14 App Router, TypeScript |
+| Styling  | TailwindCSS                       |
+| Editor   | TipTap                            |
+| Backend  | Next.js API Routes                |
+| ORM      | Prisma                            |
+| Database | SQLite (local) / PostgreSQL (prod)|
+
+---
+
+## Project Structure
 
 ```
-app/                # Next.js App Router pages
-components/         # UI and feature components
-lib/                # API utilities and types
-prisma/             # Database schema and SQLite DB
-public/uploads/     # Uploaded files
+app/
+  api/documents/     → CRUD API for documents
+  api/share/         → Add collaborators
+  api/upload/        → File upload handler
+  dashboard/         → Dashboard page
+  editor/[id]/       → Editor page
+components/
+  Dashboard/         → DashboardClient
+  Editor/            → EditorClient, Tiptap, MenuBar, Sidebar
+lib/
+  api.ts             → Typed fetch wrappers
+  prisma.ts          → Prisma singleton
+  types.ts           → Shared TypeScript types
+  user.ts            → localStorage-backed current user
+prisma/
+  schema.prisma      → DB schema
+  migrations/        → Migration history
+public/uploads/      → Uploaded files (local dev)
 ```
 
 ---
 
-## ⚙️ Getting Started
+## Setup
 
-### 1. Install dependencies
-
-```
+```bash
 npm install
-```
-
-### 2. Setup database
-
-```
-npx prisma generate
 npx prisma migrate dev --name init
-```
-
-### 3. Run the app
-
-```
 npm run dev
 ```
 
-App runs at:
-
-```
-http://localhost:3000
-```
+App runs at `http://localhost:3000`.
 
 ---
 
-## 🧪 Test Flow
+## Testing the Sharing Flow
 
-1. Create a document as:
-
-```
-lave@owner.com
-```
-
-2. Add collaborator:
-
-```
-inareshofficial@gmail.com
-```
-
-3. Switch user → view "Shared With Me"
-
-4. Edit document and verify persistence
+1. Open the app — default user is `lave@owner.com`
+2. Create a document
+3. Open the editor → Sidebar → add collaborator: `inareshofficial@gmail.com`
+4. Click "Switch Account" on the dashboard → select `inareshofficial@gmail.com`
+5. The shared document appears under "Shared With Me"
 
 ---
 
-## 🧠 Architecture Overview
+## Limitations
 
-* Monolithic full-stack app using Next.js
-* API routes handle backend logic
-* Prisma ORM manages SQLite database
-* Frontend filters simulate multi-user collaboration
-* No authentication system (intentionally scoped)
-
----
-
-## 🤖 AI Usage
-
-AI tools were used to:
-
-* Scaffold components and API routes
-* Generate initial structures
-* Assist debugging and refinement
-
-All logic was reviewed, corrected, and tested manually.
-
----
-
-## ⚖️ Tradeoffs & Decisions
-
-| Decision                   | Reason                               |
-| -------------------------- | ------------------------------------ |
-| No authentication          | Kept scope manageable                |
-| SQLite                     | Simple setup, no external dependency |
-| No real-time collaboration | Focused on core functionality        |
-| Mock users                 | Simulates real sharing behavior      |
-
----
-
-## 📌 What’s Complete
-
-* Document creation/editing
-* Sharing logic
-* File upload
-* Persistent storage
-* Clean UI/UX
-
----
-
-## 🔧 What Could Be Improved
-
-* Real authentication system
-* Real-time collaboration (WebSockets)
-* Document version history
-* Role-based permissions
-
----
-
-## 📹 Demo
-
-(Include your video link here)
-
----
-
-## 📎 Submission Notes
-
-This project focuses on:
-
-* Clean architecture
-* Practical product thinking
-* Functional full-stack implementation
-* Clear prioritization under time constraints
-
----
-
-## 👨‍💻 Author
-
-**Naresh Singam**
-
----
-
-## ⭐ Final Note
-
-This project is intentionally scoped to demonstrate strong fundamentals rather than over-engineering features.
-
----
+- No real authentication — user identity is stored in `localStorage`
+- File uploads are stored in `public/uploads/` (not suitable for multi-instance production)
+- No real-time collaboration — changes from one user are not pushed to another live
+- Collaborator list is built from existing DB records, not a user registry

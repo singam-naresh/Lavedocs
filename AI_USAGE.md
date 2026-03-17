@@ -2,44 +2,49 @@
 
 ## Tools Used
 
-- **Kiro (Claude-based AI IDE)** — primary tool for scaffolding, code generation, and refactoring throughout the project.
+- **Kiro (Claude-based AI IDE)** — primary tool used throughout the project for scaffolding, debugging, and refactoring
+- **ChatGPT** — used occasionally for quick lookups and alternative approaches
 
 ---
 
 ## Where AI Helped
 
-### Scaffolding
-- Generated the initial Next.js 14 App Router project structure from the Vite/React SPA.
-- Created all Prisma schema models (`Document`, `Collaborator`, `File`) and the migration setup.
-- Scaffolded all five API routes with proper validation and error handling.
+### Migration from Vite to Next.js 14
+The original project was a Vite/React SPA. Kiro handled the full migration to Next.js 14 App Router — restructuring routes, converting React Router links to Next.js `<Link>`, replacing `react-toastify` with `react-hot-toast`, and swapping `lodash-es` for `lodash` (CJS-compatible for ts-jest).
 
-### Component Migration
-- Converted React Router `<Link>` / `useNavigate` to Next.js `<Link>` / `useRouter`.
-- Replaced `react-toastify` with `react-hot-toast` (better Next.js compatibility).
-- Replaced `lodash-es` (ESM-only) with `lodash` (CJS, compatible with ts-jest).
+### Prisma Setup
+Kiro generated the initial `schema.prisma` with `Document`, `Collaborator`, and `File` models, set up the Prisma singleton in `lib/prisma.ts`, and scaffolded all five API routes with validation and error handling.
 
-### UX Improvements
-- Generated skeleton loader components, empty state UI, and the save-status indicator.
-- Added the TipTap `Placeholder` extension with the correct CSS hook.
-- Implemented the upload progress bar (simulated with `setInterval`).
+### Component Scaffolding
+- `DashboardClient` — document list, tabs, create/delete/rename flow
+- `EditorClient` — auto-save with debounce, title editing, collaborator management
+- `Sidebar` — file upload with progress indicator, collaborator list
+- `MenuBar` — TipTap toolbar with Lucide icons
+
+### Vercel Deployment Fixes
+Multiple build errors were debugged with AI assistance:
+- TipTap version conflicts (`canInsertNode` not exported) — fixed by upgrading all TipTap packages to `2.27.2`
+- `migration_lock.toml` provider mismatch (sqlite → postgresql)
+- PostgreSQL migration SQL rewritten from SQLite syntax
 
 ### Documentation
-- Drafted all four documentation files (`README.md`, `ARCHITECTURE.md`, `AI_USAGE.md`, `SUBMISSION.md`).
+All four documentation files were drafted with AI assistance based on the actual project structure and decisions made during development.
 
 ---
 
-## What Was Modified Manually
+## What Was Manually Corrected
 
-- **Debounce dependency array** — the `useCallback` + `debounce` pattern required careful manual review to avoid stale closures. The `docIdRef` pattern was added manually to ensure the debounced save always uses the correct document ID.
-- **Sidebar responsiveness** — the sidebar is hidden on mobile (`hidden lg:flex`) to keep the editor usable on small screens; this was a deliberate manual decision.
-- **Optimistic deletion** — switching from `loadDocs()` after delete to `setDocs(prev => prev.filter(...))` was a manual improvement for perceived performance.
-- **Jest config** — `testMatch` was scoped to `lib/**/*.test.ts` to exclude the legacy `src/lib/utils.test.ts` file that has no `describe` blocks.
+- **Debounce + stale closure bug** — the `useCallback` + `debounce` pattern had a stale `docId` reference. Fixed manually using a `useRef` to always capture the latest document ID.
+- **User switcher logic** — the initial implementation used a hardcoded user list. Manually reworked to query all unique emails from the DB (owners + collaborators) so new collaborators automatically appear in the switcher.
+- **Email case sensitivity** — comparisons like `doc.owner === currentUser` were manually updated to `.toLowerCase().trim()` throughout to prevent mismatches.
+- **Owner-only permissions** — rename, delete, and add-collaborator actions are gated to the document owner. This logic was manually reviewed and tightened.
+- **Dashboard re-fetch on focus** — added `window.addEventListener('focus', loadDocs)` manually so the dashboard picks up collaborators added in another tab.
 
 ---
 
 ## How Correctness Was Verified
 
-1. **TypeScript** — `getDiagnostics` was run after every file change; zero type errors across all files.
-2. **Unit tests** — `npx jest` confirmed 3 passing tests covering the document-filtering logic.
-3. **Manual review** — each API route was read and checked for correct Prisma queries, HTTP status codes, and error handling.
-4. **Prisma migration** — `npx prisma migrate dev` was run successfully, confirming the schema is valid and the SQLite database was created.
+- TypeScript diagnostics run after every file change — zero type errors across all files
+- `npx jest` — 3 passing unit tests covering `filterByOwner` and `filterShared` logic
+- Manual end-to-end testing: create doc → add collaborator → switch user → verify "Shared With Me" shows the doc
+- Vercel build logs reviewed after each push to confirm clean compilation

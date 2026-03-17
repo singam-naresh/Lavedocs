@@ -1,71 +1,99 @@
 # Architecture
 
-## System Design
+## Overview
+
+LaveDocs is a monolithic full-stack app using Next.js 14 App Router. The frontend and backend live in the same repo. API routes handle all data operations; the frontend communicates with them via typed `fetch` wrappers.
 
 ```
 Browser
   │
-  ├── /dashboard          → DashboardClient (React, client component)
+  ├── /dashboard          → DashboardClient (client component)
   │     └── GET /api/documents
   │
-  └── /editor/[id]        → EditorClient (React, client component)
+  └── /editor/[id]        → EditorClient (client component)
         ├── GET  /api/documents/[id]
-        ├── PUT  /api/documents/[id]   (auto-save, debounced)
+        ├── PUT  /api/documents/[id]    ← debounced auto-save
+        ├── DELETE /api/documents/[id]
         ├── POST /api/share
         └── POST /api/upload
 
-Next.js API Routes (Node.js, server-side)
+Next.js API Routes (Node.js runtime)
   └── Prisma ORM
-        └── SQLite (prisma/dev.db)
+        └── SQLite (local) / PostgreSQL (Neon on Vercel)
 ```
-
-### Request Flow
-
-1. Page shell (`app/dashboard/page.tsx`) is a **Server Component** — zero JS shipped for the shell itself.
-2. It renders a **Client Component** (`DashboardClient`) that fetches data from the API on mount.
-3. API routes use the **Prisma singleton** (`lib/prisma.ts`) to query SQLite.
-4. Responses are plain JSON; the frontend uses typed `fetch` wrappers in `lib/api.ts`.
 
 ---
 
-## Key Decisions
+## App Router Usage
 
-### Next.js App Router over Pages Router
-App Router enables per-route server components, reducing client bundle size. The page shells are server components; only the interactive parts are client components.
+Page shells (`app/dashboard/page.tsx`, `app/editor/[id]/page.tsx`) are Server Components — they render the HTML frame and hand off to Client Components for interactivity. This keeps the initial JS bundle small.
 
-### SQLite + Prisma
-SQLite requires zero infrastructure — the database is a single file. Prisma provides type-safe queries and a clean migration workflow. Switching to PostgreSQL for production requires changing one line in `schema.prisma`.
+All data fetching happens client-side on mount via `useEffect` + the `lib/api.ts` wrappers. No `getServerSideProps` or `loader` functions — kept intentionally simple.
 
-### No Authentication
-Hardcoding `me@example.com` as the current user keeps the scope tight and lets evaluators focus on the core features. Adding NextAuth.js or Clerk would be a straightforward next step.
+---
 
-### Debounced Auto-Save
-Content changes are debounced at 1.5 s to avoid hammering the API on every keystroke. A manual "Save" button is also provided for explicit saves.
+## API Routes
 
-### Client-Side Optimistic Updates
-Document deletion is applied optimistically (removed from state immediately) to keep the UI snappy. If the API call fails, a toast notifies the user.
+| Route | Methods | Purpose |
+|---|---|---|
+| `/api/documents` | GET, POST | List all docs (with collaborators + files), create new doc |
+| `/api/documents/[id]` | GET, PUT, DELETE | Fetch, update content/title, delete |
+| `/api/share` | POST | Add a collaborator email to a document |
+| `/api/upload` | POST | Accept a `.txt` file, write to `public/uploads/`, record in DB |
 
-### File Storage in `public/uploads/`
-Uploaded files are written to `public/uploads/` and served by Next.js's static file handler. For production, this would be replaced with S3 or similar object storage.
+All routes return JSON. Errors return `{ error: string }` with an appropriate HTTP status.
+
+---
+
+## Database Design
+
+Three models in `prisma/schema.prisma`:
+
+- `Document` — id, title, content, owner (email string), createdAt, updatedAt
+- `Collaborator` — id, email, documentId (FK → Document, cascade delete)
+- `File` — id, name, path, documentId (FK → Document, cascade delete)
+
+No `User` model — identity is just an email string. This keeps the schema minimal and avoids auth complexity.
+
+---
+
+## Sharing Logic
+
+1. Owner opens editor → types an email in the Sidebar → hits "Add"
+2. `POST /api/share` creates a `Collaborator` record linking that email to the document
+3. On the dashboard, `GET /api/documents` returns all documents with their `collaborators` array
+4. The frontend filters: "My Documents" = `doc.owner === currentUser`, "Shared With Me" = `doc.collaborators.some(c => c.email === currentUser)`
+5. The user switcher reads all unique emails from the DB (owners + collaborators) and lets you switch identity via `localStorage`
+
+---
+
+## File Upload Flow
+
+1. User selects a `.txt` file in the Sidebar
+2. `POST /api/upload` receives the file via `FormData`, writes it to `public/uploads/<timestamp>-<filename>`, and creates a `File` record in the DB
+3. The file is served by Next.js's static file handler at `/uploads/<filename>`
+4. The Sidebar lists all attached files as download links
+
+For production, `public/uploads/` would be replaced with S3 or similar — the API route would just change where it writes the file.
 
 ---
 
 ## Tradeoffs
 
-| Decision | Benefit | Tradeoff |
-|---|---|---|
-| SQLite | Zero setup, portable | Not suitable for multi-instance deployments |
-| Client-side fetch on mount | Simple, no SSR complexity | Initial page shows skeleton while loading |
-| Debounced save | Fewer API calls | Up to 1.5 s of unsaved changes on crash |
-| `public/uploads/` for files | No extra infra | Files are publicly accessible by URL |
-| Hardcoded user | Keeps scope tight | No real multi-user isolation |
+| Decision | Reason |
+|---|---|
+| No authentication | Keeps scope tight; user = email string in localStorage |
+| SQLite locally, PostgreSQL on Vercel | SQLite needs zero setup for local dev; Neon Postgres for serverless |
+| Client-side data fetching | Simpler than SSR for this use case; skeleton loaders handle the loading state |
+| Debounced auto-save (1.5s) | Avoids hammering the API on every keystroke |
+| `public/uploads/` for files | No extra infra needed; acceptable for a demo |
+| No real-time sync | WebSockets/polling would add significant complexity for marginal demo value |
 
 ---
 
-## Prioritization
+## What Was Intentionally Left Out
 
-1. **Working persistence** — replacing localStorage with a real DB was the highest priority.
-2. **Clean API surface** — typed routes with proper validation and error responses.
-3. **UX polish** — loading states, empty states, and toasts make the app feel production-ready.
-4. **Sharing** — real collaborator records in the DB, reflected in both tabs.
-5. **File upload** — simple but functional; stored on disk with a progress indicator.
+- Real authentication (NextAuth, Clerk) — would obscure the core features for evaluators
+- Real-time collaboration (WebSockets, CRDTs) — out of scope for the time available
+- Role-based permissions beyond owner/collaborator — not needed for the demo
+- Email notifications — no SMTP setup required
